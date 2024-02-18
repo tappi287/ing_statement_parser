@@ -9,8 +9,8 @@ This should make it more usable to import data into a tool like [Hibiscus](https
 
 ## Setup
 1. Install [Python 3.11](https://python.org) and [poetry](https://python-poetry.org/docs/#installation)
-2. Clone or download the repository git clone https://github.com/tappi287/ing_statement_parser.git
-3. install the dependencies: ´poetry install´
+2. Clone or download the repository `git clone https://github.com/tappi287/ing_statement_parser.git`
+3. install the dependencies: `poetry install`
 
 ## Usage
 For example, if you want to parse `kontoauszug.pdf`:
