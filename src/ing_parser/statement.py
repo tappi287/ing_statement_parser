@@ -28,6 +28,7 @@ class IngStatement(IngBase):
         if self._df is None:
             data = pd.DataFrame(self.results)
             data["date"] = pd.to_datetime(data["date"], format="%d.%m.%Y")
+            data["valuta"] = pd.to_datetime(data["valuta"], format="%d.%m.%Y")
             self._df = data
 
         return self._df
