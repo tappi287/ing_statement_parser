@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "ing_parse"
+version = "0.1.0"
+description = "Parse ING bank statements"
+authors = ["tappi287 <tapper.stefan@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "ing_parser", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pypdf = ">=3.1.0"
+pandas = "^2.2.0"
+
+[tool.poetry.scripts]
+ingparser = "scripts.ing_parse_script:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
