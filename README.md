@@ -8,8 +8,9 @@ This version uses refactored code and extends the parser with new columns:
 This should make it more usable to import data into a tool like [Hibiscus](https://www.willuhn.de/products/hibiscus/)
 
 ## Setup
-1. Clone or download the repository git clone https://github.com/kaiklede/ing-kontoauszug-parser.git && cd ing-kontoauszug-parser
-2. install the dependencies poetry update
+1. Install [Python 3.11](https://python.org) and [poetry](https://python-poetry.org/docs/#installation)
+2. Clone or download the repository git clone https://github.com/tappi287/ing_statement_parser.git
+3. install the dependencies: ´poetry install´
 
 ## Usage
 For example, if you want to parse `kontoauszug.pdf`:
