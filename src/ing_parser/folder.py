@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union, Optional, List
 
 import pandas as pd
 
@@ -10,8 +10,9 @@ from ing_parser.statement import IngStatement
 class IngStatementsFolder(IngBase):
     def __init__(self, source_directory: Union[str, Path], account_type: str = 'Giro'):
         self.source_directory = Path(source_directory)
-        self.account_type = account_type
+        self.account_type = account_type.lower()
         self._df: Optional[pd.DataFrame] = None
+        self.data: List[IngStatement] = list()
 
     @property
     def dataframe(self) -> pd.DataFrame:
@@ -23,8 +24,9 @@ class IngStatementsFolder(IngBase):
         dataframes = list()
 
         for file in self.source_directory.glob("*.pdf"):
-            if self.SEARCH_TERM in file.name.lower() and self.account_type in file.name.lower():
+            if self._SEARCH_TERM in file.name.lower() and self.account_type in file.name.lower():
                 ing_statement = IngStatement(file)
                 dataframes.append(ing_statement.dataframe)
+                self.data.append(ing_statement.data)
 
         return pd.concat(dataframes)

@@ -1,20 +1,33 @@
-[tool.poetry]
+[project]
 name = "ing_parse"
 version = "0.1.0"
 description = "Parse ING bank statements"
-authors = ["tappi287 <tapper.stefan@gmail.com>"]
-license = "MIT"
+authors = [{ name = "tappi287", email = "tapper.stefan@gmail.com" }]
+requires-python = ">=3.11"
 readme = "README.md"
-packages = [{include = "ing_parser", from = "src"}]
+license = "MIT"
+dependencies = [
+    "pypdf==5.3.1",
+    "pandas==2.2.3",
+    "pytest>=8.3.5",
+    "numpy==2.2.3",
+    "pytz==2025.1",
+    "six==1.17.0",
+    "tzdata==2025.1",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-pypdf = ">=3.1.0"
-pandas = "^2.2.0"
-
-[tool.poetry.scripts]
+[project.scripts]
 ingparser = "scripts.ing_parse_script:main"
 
+[tool.hatch.build.targets.sdist]
+include = ["src/ing_parser"]
+
+[tool.hatch.build.targets.wheel]
+include = ["src/ing_parser"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src/ing_parser" = "ing_parser"
+
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
