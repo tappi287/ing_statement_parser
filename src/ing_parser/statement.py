@@ -5,7 +5,7 @@ import pandas as pd
 from pypdf import PdfReader
 
 from ing_parser.base import IngBase
-from ing_parser.data import BankStatement, Transaction
+from ing_parser.data import BankStatement, Transaction, to_iso_date
 
 
 class IngStatement(IngBase):
@@ -50,7 +50,7 @@ class IngStatement(IngBase):
         lines = self._read_pdf()
 
         for idx, line in enumerate(lines):
-            self._parse_statement_data(line)
+            self._parse_statement_fields(line, self.data)
             if skip_next_line:
                 skip_next_line = False
                 continue
@@ -65,8 +65,8 @@ class IngStatement(IngBase):
         for idx in range(len(self._results['date'])):
             self.data.add_transaction(
                 Transaction(
-                    date=self._to_iso_date(self._results['date'][idx]),
-                    valuta=self._to_iso_date(self._results['valuta'][idx]),
+                    date=to_iso_date(self._results['date'][idx]),
+                    valuta=to_iso_date(self._results['valuta'][idx]),
                     issuer=self._results['issuer'][idx],
                     description=self._results['description'][idx],
                     amount=self._results['amount'][idx],
@@ -109,31 +109,6 @@ class IngStatement(IngBase):
 
         # The following line belongs to this entry
         return True
-
-    def _parse_statement_data(self, line: str):
-        """ Extract data belonging to the whole statement """
-        statement_month = self._parse_statement_month(line)
-        if statement_month:
-            self.data.statement_month = statement_month.month
-            self.data.statement_year = statement_month.year
-        statement_date = self._parse_statement_date(line)
-        if statement_date:
-            self.data.statement_date = statement_date.isoformat()
-        statement_no = self._parse_statement_number(line)
-        if statement_no:
-            self.data.statement_number = statement_no
-        statement_balance = self._parse_statement_balance(line)
-        if statement_balance:
-            self.data.statement_balance = statement_balance
-        statement_balance_old = self._parse_statement_balance_old(line)
-        if statement_balance_old:
-            self.data.statement_old_balance = statement_balance_old
-        statement_iban = self._parse_statement_iban(line)
-        if statement_iban:
-            self.data.account_id = statement_iban
-        statement_bic = self._parse_statement_bic(line)
-        if statement_bic:
-            self.data.bank_id = statement_bic
 
     def _parse_description(self, lines, current_idx):
         # -- Parse first description line including Valuta
