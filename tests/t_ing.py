@@ -7,7 +7,8 @@ from ing_parser.statement import IngStatement
 def test_parser():
     test_file = Path(r'I:\Nextcloud\Documents\Konto\ING-Giro\Girokonto_5422021297_Kontoauszug_20171101.pdf')
     statement = IngStatement(test_file)
-    print(statement.results)
+    print(statement.dataframe)
+    assert len(statement.data.transactions) > 0
 
 
 def test_folder():

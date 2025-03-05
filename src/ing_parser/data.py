@@ -1,10 +1,9 @@
-import logging
 import locale
+import logging
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List, Optional
-
 
 try:
     # Try to set locale to german for parsing german date description
@@ -33,6 +32,7 @@ def parse_float(v: Optional[re.Match]) -> Optional[float]:
     if len(v.groups()) != 1:
         return None
     return float(v.group(1).replace(".", "").replace(",", "."))
+
 
 @dataclass
 class Transaction:
@@ -113,7 +113,6 @@ class BankStatement:
         statement_header = (f"Kontoauszug {self.statement_month} {self.statement_year} "
                             f"Auszugsnummer {self.statement_number}, {self.statement_date}")
         transaction_details = "\n".join(
-            f"Buchung {t.date[:10]}, Valuta {t.valuta[:10]}, {t.issuer}, {t.type}, {t.amount:.2f}"
-            for t in self.transactions
-        )
+            f"Buchung {t.date[:10]}, Valuta {t.valuta[:10]}, {t.issuer}, {t.type}, {t.amount:.2f}" for t in
+            self.transactions)
         return f"{statement_header}\n{transaction_details}"

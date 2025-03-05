@@ -12,7 +12,7 @@ class IngStatementsFolder(IngBase):
         self.source_directory = Path(source_directory)
         self.account_type = account_type.lower()
         self._df: Optional[pd.DataFrame] = None
-        self.data: List[IngStatement] = list()
+        self.statements: List[IngStatement] = list()
 
     @property
     def dataframe(self) -> pd.DataFrame:
@@ -26,7 +26,8 @@ class IngStatementsFolder(IngBase):
         for file in self.source_directory.glob("*.pdf"):
             if self._SEARCH_TERM in file.name.lower() and self.account_type in file.name.lower():
                 ing_statement = IngStatement(file)
+                ing_statement.parse_ing_bank_statement()
+                self.statements.append(ing_statement)
                 dataframes.append(ing_statement.dataframe)
-                self.data.append(ing_statement.data)
 
         return pd.concat(dataframes)

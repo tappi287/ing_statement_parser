@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union, Optional, List
+from typing import Union, List
 
 import pandas as pd
 from pypdf import PdfReader
@@ -21,30 +21,43 @@ class IngStatement(IngBase):
                 'description' (str), and 'amount' (float).
         """
         self.source_file = Path(source_file)
-        self._df: Optional[pd.DataFrame] = None
         self.data = BankStatement()
-        self._results = dict()
+        self._rows = dict()
+
+    def _to_pandas_df(self) -> pd.DataFrame:
+        """Create a Pandas DataFrame from the BankStatement Transaction data."""
+        transactions_data = []
+        for transaction in self.data.transactions:
+            date_str = pd.to_datetime(transaction.date)
+            valuta_str = pd.to_datetime(transaction.valuta)
+            issuer_str = transaction.issuer
+            type_str = transaction.type
+            description_str = transaction.description
+            amount = transaction.amount
+
+            transactions_data.append([
+                date_str,
+                valuta_str,
+                issuer_str,
+                type_str,
+                description_str,
+                amount
+            ])
+
+        # Convert list of lists to DataFrame
+        return pd.DataFrame(transactions_data, columns=[
+            'date', 'valuta', 'issuer', 'type', 'description', 'amount'
+        ])
 
     @property
     def dataframe(self) -> pd.DataFrame:
-        if self._df is None:
-            data = pd.DataFrame(self.results)
-            data["date"] = pd.to_datetime(data["date"], format="%d.%m.%Y")
-            data["valuta"] = pd.to_datetime(data["valuta"], format="%d.%m.%Y")
-            self._df = data
-
-        return self._df
-
-    @property
-    def results(self) -> dict:
-        if not self._results:
+        if not len(self.data.transactions):
             self.parse_ing_bank_statement()
-
-        return self._results
+        return self._to_pandas_df()
 
     def parse_ing_bank_statement(self):
-        self._results = {"date": [], "valuta": [], "issuer": [], "type": [], "description": [], "amount": []}
         self.data.clear_transactions()
+        self._rows = {"date": [], "valuta": [], "issuer": [], "type": [], "description": [], "amount": []}
 
         skip_next_line = False
         lines = self._read_pdf()
@@ -62,17 +75,11 @@ class IngStatement(IngBase):
                 skip_next_line = True
 
         # -- Store transactions data
-        for idx in range(len(self._results['date'])):
+        for idx in range(len(self._rows['date'])):
             self.data.add_transaction(
-                Transaction(
-                    date=to_iso_date(self._results['date'][idx]),
-                    valuta=to_iso_date(self._results['valuta'][idx]),
-                    issuer=self._results['issuer'][idx],
-                    description=self._results['description'][idx],
-                    amount=self._results['amount'][idx],
-                    type=self._results['type'][idx]
-                )
-            )
+                Transaction(date=to_iso_date(self._rows['date'][idx]), valuta=to_iso_date(self._rows['valuta'][idx]),
+                    issuer=self._rows['issuer'][idx], description=self._rows['description'][idx],
+                    amount=self._rows['amount'][idx], type=self._rows['type'][idx]))
 
     def _read_pdf(self) -> List[str]:
         lines = list()
@@ -102,10 +109,10 @@ class IngStatement(IngBase):
         issuer = line_wo_date[len(tr_type):].strip()
 
         amount = float(amount.replace(".", "").replace(",", "."))
-        self._results["date"].append(date_string)
-        self._results["amount"].append(amount)
-        self._results["issuer"].append(issuer)
-        self._results["type"].append(tr_type)
+        self._rows["date"].append(date_string)
+        self._rows["amount"].append(amount)
+        self._rows["issuer"].append(issuer)
+        self._rows["type"].append(tr_type)
 
         # The following line belongs to this entry
         return True
@@ -120,15 +127,15 @@ class IngStatement(IngBase):
             # -- Date found, new entry, abort
             if date is not None or idx >= self._MAX_DESC_LINES:
                 return
-            self._results["description"][-1] += "\n" + line.strip()
+            self._rows["description"][-1] += "\n" + line.strip()
 
     def _parse_first_description_line(self, line):
         valuta = self._DATE_REGEX.search(line)
         if valuta is not None:
             valuta = valuta.group(0)
             description = line[len(valuta):].strip()
-            self._results["valuta"].append(valuta)
-            self._results["description"].append(description)
+            self._rows["valuta"].append(valuta)
+            self._rows["description"].append(description)
 
     def __str__(self):
         return str(self.data)
