@@ -21,13 +21,13 @@ class IngStatement(IngBase):
                 'description' (str), and 'amount' (float).
         """
         self.source_file = Path(source_file)
-        self.data = BankStatement()
+        self._data = BankStatement()
         self._rows = dict()
 
     def _to_pandas_df(self) -> pd.DataFrame:
         """Create a Pandas DataFrame from the BankStatement Transaction data."""
         transactions_data = []
-        for transaction in self.data.transactions:
+        for transaction in self._data.transactions:
             date_str = pd.to_datetime(transaction.date)
             valuta_str = pd.to_datetime(transaction.valuta)
             issuer_str = transaction.issuer
@@ -50,20 +50,26 @@ class IngStatement(IngBase):
         ])
 
     @property
+    def data(self) -> BankStatement:
+        if not len(self._data.transactions):
+            self.parse_ing_bank_statement()
+        return self._data
+
+    @property
     def dataframe(self) -> pd.DataFrame:
-        if not len(self.data.transactions):
+        if not len(self._data.transactions):
             self.parse_ing_bank_statement()
         return self._to_pandas_df()
 
     def parse_ing_bank_statement(self):
-        self.data.clear_transactions()
+        self._data.clear_transactions()
         self._rows = {"date": [], "valuta": [], "issuer": [], "type": [], "description": [], "amount": []}
 
         skip_next_line = False
         lines = self._read_pdf()
 
         for idx, line in enumerate(lines):
-            self._parse_statement_fields(line, self.data)
+            self._parse_statement_fields(line, self._data)
             if skip_next_line:
                 skip_next_line = False
                 continue
@@ -76,7 +82,7 @@ class IngStatement(IngBase):
 
         # -- Store transactions data
         for idx in range(len(self._rows['date'])):
-            self.data.add_transaction(
+            self._data.add_transaction(
                 Transaction(date=to_iso_date(self._rows['date'][idx]), valuta=to_iso_date(self._rows['valuta'][idx]),
                     issuer=self._rows['issuer'][idx], description=self._rows['description'][idx],
                     amount=self._rows['amount'][idx], type=self._rows['type'][idx]))
@@ -138,4 +144,4 @@ class IngStatement(IngBase):
             self._rows["description"].append(description)
 
     def __str__(self):
-        return str(self.data)
+        return str(self._data)
