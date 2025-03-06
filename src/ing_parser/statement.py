@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Union, List
 
@@ -8,7 +9,8 @@ from ing_parser.base import IngBase
 from ing_parser.data import BankStatement, Transaction, to_iso_date
 
 
-class IngStatement(IngBase):
+class IngStatement(IngBase, BankStatement):
+
     def __init__(self, source_file: Union[str, Path]):
         """
         Parses a given bank statement PDF file and returns its contents as a pandas DataFrame.
@@ -20,14 +22,15 @@ class IngStatement(IngBase):
                 'date' (datetime), 'valuta' (datetime), 'issuer' (str), 'type' (str)
                 'description' (str), and 'amount' (float).
         """
+        super().__init__()
         self.source_file = Path(source_file)
-        self._data = BankStatement()
         self._rows = dict()
+        self._parsed = False
 
     def _to_pandas_df(self) -> pd.DataFrame:
         """Create a Pandas DataFrame from the BankStatement Transaction data."""
         transactions_data = []
-        for transaction in self._data.transactions:
+        for transaction in self.transactions:
             date_str = pd.to_datetime(transaction.date)
             valuta_str = pd.to_datetime(transaction.valuta)
             issuer_str = transaction.issuer
@@ -35,41 +38,33 @@ class IngStatement(IngBase):
             description_str = transaction.description
             amount = transaction.amount
 
-            transactions_data.append([
-                date_str,
-                valuta_str,
-                issuer_str,
-                type_str,
-                description_str,
-                amount
-            ])
+            transactions_data.append([date_str, valuta_str, issuer_str, type_str, description_str, amount])
 
         # Convert list of lists to DataFrame
-        return pd.DataFrame(transactions_data, columns=[
-            'date', 'valuta', 'issuer', 'type', 'description', 'amount'
-        ])
-
-    @property
-    def data(self) -> BankStatement:
-        if not len(self._data.transactions):
-            self.parse_ing_bank_statement()
-        return self._data
+        return pd.DataFrame(transactions_data, columns=['date', 'valuta', 'issuer', 'type', 'description', 'amount'])
 
     @property
     def dataframe(self) -> pd.DataFrame:
-        if not len(self._data.transactions):
-            self.parse_ing_bank_statement()
+        if not len(self.transactions):
+            self._auto_parse_ing_bank_statement()
         return self._to_pandas_df()
 
+    def _auto_parse_ing_bank_statement(self):
+        """ Meant to not reparse on every call to properties """
+        if self._parsed:
+            return
+        self._parsed = True
+        self.parse_ing_bank_statement()
+
     def parse_ing_bank_statement(self):
-        self._data.clear_transactions()
+        self.clear_transactions()
         self._rows = {"date": [], "valuta": [], "issuer": [], "type": [], "description": [], "amount": []}
 
         skip_next_line = False
         lines = self._read_pdf()
 
         for idx, line in enumerate(lines):
-            self._parse_statement_fields(line, self._data)
+            self._parse_statement_fields(line, self)
             if skip_next_line:
                 skip_next_line = False
                 continue
@@ -82,14 +77,16 @@ class IngStatement(IngBase):
 
         # -- Store transactions data
         for idx in range(len(self._rows['date'])):
-            self._data.add_transaction(
-                Transaction(date=to_iso_date(self._rows['date'][idx]), valuta=to_iso_date(self._rows['valuta'][idx]),
-                    issuer=self._rows['issuer'][idx], description=self._rows['description'][idx],
-                    amount=self._rows['amount'][idx], type=self._rows['type'][idx]))
+            data = {k: v[idx] for k, v in self._rows.items()}
+            self.add_transaction(Transaction(**data))
 
     def _read_pdf(self) -> List[str]:
         lines = list()
-        reader = PdfReader(self.source_file)
+        try:
+            reader = PdfReader(self.source_file)
+        except Exception as e:
+            logging.error(f"Error reading file while trying to parse statement: {e}")
+            return lines
 
         for page in reader.pages:
             content = page.extract_text(0)
@@ -115,7 +112,7 @@ class IngStatement(IngBase):
         issuer = line_wo_date[len(tr_type):].strip()
 
         amount = float(amount.replace(".", "").replace(",", "."))
-        self._rows["date"].append(date_string)
+        self._rows["date"].append(to_iso_date(date_string))
         self._rows["amount"].append(amount)
         self._rows["issuer"].append(issuer)
         self._rows["type"].append(tr_type)
@@ -140,8 +137,5 @@ class IngStatement(IngBase):
         if valuta is not None:
             valuta = valuta.group(0)
             description = line[len(valuta):].strip()
-            self._rows["valuta"].append(valuta)
+            self._rows["valuta"].append(to_iso_date(valuta))
             self._rows["description"].append(description)
-
-    def __str__(self):
-        return str(self._data)
