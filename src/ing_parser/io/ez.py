@@ -1,3 +1,4 @@
+import csv
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -127,4 +128,5 @@ def convert_to_ez_dataframe(statements: List[BankStatement]) -> pd.DataFrame:
 
 
 def export_ez_csv(out_file: Path, df: pd.DataFrame):
-    return df.to_csv(out_file, index=False, sep=",", quoting=0, doublequote=False)
+    return df.to_csv(out_file, index=False, sep=",", doublequote=False,
+                     quoting=csv.QUOTE_NONE, quotechar="",  escapechar="\\")

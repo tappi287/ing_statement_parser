@@ -1,8 +1,15 @@
+import logging
 from pathlib import Path
 
 from ing_parser.folder import IngStatementsFolder
 from ing_parser.statement import IngStatement
 from ing_parser.io import yaffa, ez
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+)
+
 
 def test_parser():
     test_file = Path(r'I:\Nextcloud\Documents\Konto\ING-Giro\Girokonto_5422021297_Kontoauszug_20180330.pdf')
