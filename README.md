@@ -8,17 +8,17 @@ This version uses refactored code and extends the parser with new columns:
 This should make it more usable to import data into a tool like [Hibiscus](https://www.willuhn.de/products/hibiscus/)
 
 ## Setup
-1. Install [Python 3.11](https://python.org) and [poetry](https://python-poetry.org/docs/#installation)
+1. Install [Python 3.11](https://python.org) and [uv](https://docs.astral.sh/uv/getting-started/installation/)
 2. Clone or download the repository `git clone https://github.com/tappi287/ing_statement_parser.git`
-3. install the dependencies: `poetry install`
+3. install the dependencies: `uv lock`
 
 ## Usage
 For example, if you want to parse `kontoauszug.pdf`:
 ```
-poetry run ingparser kontoauszug.pdf
+uv run ingparser kontoauszug.pdf
 ```
 
-You can use ```poetry run ingparser --help``` to see further options
+You can use ```uv run ingparser --help``` to see further options
 
 ```
 usage: ingparser.py [-h] [-a ACCOUNT] [-o OUTPUT] INPUT
